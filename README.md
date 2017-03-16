@@ -9,7 +9,7 @@ in this read me. I have included some code snippets but nothing specific. If you
 like to see my solutions feel free to check them out. All the code uses a cs50 library designed to make C simpler for
 beginners but might cause some confusion for people more familiar with C.
 
-### pset0 (scratch)
+### pset0 (Language: Scratch)
 See my code here: [Catch the Butterfly](https://scratch.mit.edu/projects/149761466/)
 
 ### pset1 (Language: C)
