@@ -9,6 +9,9 @@ in this read me. I have included some code snippets but nothing specific. If you
 like to see my solutions feel free to check them out. All the code uses a cs50 library designed to make C simpler for
 beginners but might cause some confusion for people more familiar with C.
 
+### pset0 (scratch)
+See my code here: [Catch the Butterfly](https://scratch.mit.edu/projects/149761466/)
+
 ### pset1 (Language: C)
 This was my first time writing anything in C. I have learned C++ before but had not used it in years so my original solutions
 could be significantly improved on.
