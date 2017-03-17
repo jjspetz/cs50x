@@ -16,7 +16,7 @@ See my code here: [Catch the Butterfly](https://scratch.mit.edu/projects/1497614
 This was my first time writing anything in C. I have learned C++ before but had not used it in years so my original solutions
 could be significantly improved on.
 #### Tip 1: Remember that C has do-while loops.
-If you don't know how to use them google it. Using them would have made my pset1 codes a lot cleaner than they were.
+If you don't know how to use them google it. Using them would have made my pset1 codes a lot cleaner than they were. After implementing some of my later code with do-while loops it seems they tend to cause failures when doing check50, so you might want to not use them if you want everything to pass the check. I still think it improves the overall code, but I will be leaving them out of solutions where it is causing check50 failures.
 #### Tip 2: Learn how returns from functions work in C
 The lectures show how to write functions and declare them.
 For example:
@@ -42,3 +42,5 @@ My biggest problem this week was not understanding how to change a variable from
 form to another in C. For example changing a sting to an int or understanding the
 difference between a char* and a char. This lead to me getting segmentation fault
 run time errors I did not expect from my experience with other languages.
+
+### pset3 (Language: C)
