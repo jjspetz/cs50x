@@ -17,6 +17,8 @@ class Analyzer():
             if not lines.startswith(";") and not lines.startswith("\n"):
                 neg_words.append(lines.strip("\n"))
         self.negatives = neg_words
+        File_pos.close()
+        File_neg.close()
 
     def analyze(self, text):
         """Analyze text for sentiment, returning its score."""

@@ -20,6 +20,9 @@ class Analyzer():
                 neg_words.append(lines.strip("\n"))
         self.negatives = neg_words
 
+        File_pos.close()
+        File_neg.close()
+
     def analyze(self, text):
         """Analyze text for sentiment, returning its score."""
         score = 0
