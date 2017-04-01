@@ -51,12 +51,18 @@ main td
     text-align: center;
 }
 table {
-    width: 50%;
-    margin: 1em auto;
+    width: 65%;
+    margin: 1em 0.5em;
 }
-.display td {
+.index-display {
+    font-size: 14pt;
+}
+.index-display td,.index-display th {
     text-align: right !important;
 }
-th {
+.beside-table {
+    margin-top: 1.5em;
+    margin-right: 1em;
     text-align: right;
+    float: right;
 }

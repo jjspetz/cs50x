@@ -5,7 +5,17 @@
 {% endblock %}
 
 {% block main %}
-    <div class="display">
+<div class="index-display">
+    <h1>{{user}}'s Portfolio</h1>
+    <div class=beside-table>
+        <div class=cash>
+            <strong>cash: </strong> {{cash}}
+        </div>
+        <div class=net>
+            <strong>total balance: </strong> {{netval}}
+        </div>
+    </div>
+    <div>
     <table>
         <tr>
             <th>Stock Symbol</th>
@@ -14,20 +24,16 @@
             <th>Total Value</th>
         </tr>
         {% for i in range(count) %}
+        {% if port[i]["SUM(quantity)"] > 0 %}
         <tr>
-            <td>{{stocks[i]}}</td>
-            <td>{{quantity[i]}}</td>
+            <td>{{port[i]["stocks"]}}</td>
+            <td>{{port[i]["SUM(quantity)"]}}</td>
             <td>{{sp[i]}}</td>
             <td>{{tp[i]}}</td>
         </tr>
+        {% endif %}
         {% endfor %}
     </table>
     </div>
-    <div class=beside-table>
-        <div class=cash>
-        </div>
-        <div class=net>
-            {{table}}
-        </div>
-    </div>    
+</div>
 {% endblock %}

@@ -79,7 +79,7 @@ def find_shareprice(symbol):
     else:
         return quote["price"]
 
-def find_purchaseprice(symbol, quantity):
+def find_transactionprice(symbol, quantity):
     # calculate the total purchase price
     purchase_price = find_shareprice(symbol) * int(quantity)
     

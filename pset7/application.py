@@ -39,22 +39,36 @@ db = SQL("sqlite:///finance.db")
 @login_required
 def index():
     """Displays Portfolio in a table"""
-    table = db.execute("SELECT * FROM portfolio WHERE id = :user_id", user_id=session["user_id"])
-    stocks = table[0]["stocks"].split(",")
-    quantity = table[0]["quantity"].split(",")
+    # finds all the users stock information and formates it grouping similar stocks
+    portfolio = db.execute("SELECT stocks, SUM(quantity) FROM transactions \
+    WHERE id=:user_id GROUP BY stocks", user_id=session["user_id"])
     
-    # handles cases where a stock is duplicted
-    # if too hard can be handled in buy/sell and current buy can be used for history
-        
-    count = len(stocks)
+    # finds the needed cash information from users
+    user_info = db.execute("SELECT username, cash FROM users WHERE id = :user_id", user_id=session["user_id"])
+    
+    # declares list to populate the index.html
     shareprice = []
     totalprice = []
+    count = (len(portfolio))
+    net_value = 0
     
+    # puts the information into easy to interate over lists
     for i in range(count):
-        shareprice.append(usd(find_shareprice(stocks[i])))
-        totalprice.append(usd(find_purchaseprice(stocks[i], quantity[i])))
+        shareprice.append(usd(find_shareprice(portfolio[i]["stocks"])))
+        # tmp file to call purchase only once
+        tmp = find_transactionprice(portfolio[i]["stocks"], portfolio[i]["SUM(quantity)"])
+        net_value += tmp
+        totalprice.append(usd(tmp))
+        
+    # finishes calculating net value
+    net_value = net_value + user_info[0]['cash']
     
-    return render_template("index.html", stocks=stocks, quantity=quantity, sp=shareprice, tp=totalprice, count=count, table=table)
+    # formates values into dollar form
+    cash = usd(user_info[0]['cash'])
+    net_value = usd(net_value)
+    
+    return render_template("index.html", sp=shareprice, tp=totalprice, count=count,\
+    port=portfolio, cash=cash, user=user_info[0]["username"], netval=net_value)
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
@@ -69,43 +83,39 @@ def buy():
             return apology("must provide a stock symbol")
 
         # ensure password was submitted
-        elif not request.form.get("quantity") or not request.form.get("quantity").isdigit()::
+        elif not request.form.get("quantity") or not request.form.get("quantity").isdigit():
             return apology("must enter the amount of stock to buy")
         
-        # finds how much cash the current user has avialable
-        cash_list = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id = session["user_id"])
-        # convert returned list value to a float
-        cash = cash_list[0].get("cash")
+        elif float(request.form.get("quantity")) <= 0:
+            return apology("enter a positive number")
         
-        purchase_price = find_purchaseprice(request.form.get("symbol"), request.form.get("quantity"))
-        if purchase_price > cash:
-            return apology("you don't have enough money")
-        else:    
-            # returns current stock and quantity string in portfolio
-            portfolio = db.execute("SELECT * FROM portfolio WHERE id = :user_id", user_id = session["user_id"])
-    #######
-    #           
-    #       
-    #           
-    #           
-    ########
-            if portfolio[0]["stocks"] != None:
-                stocks = str(portfolio[0]["stocks"])
-                stocks += "," + request.form.get("symbol").upper()
-                quantity = str(portfolio[0]["quantity"])
-                quantity += "," + request.form.get("quantity")
-        
-                # inserts stock into portfolio (needs fix currently writes over old buys build a sting array)
-                db.execute('UPDATE portfolio SET stocks=:stocks, quantity=:quantity WHERE id=:user_id', stocks=stocks, quantity=quantity, user_id=session["user_id"])
+        else:
+            quote = lookup(request.form.get("symbol"))
+             
+            if quote == None: 
+                return apology("couldn't find {} stock".format(request.form.get("symbol").upper()))
+    
             else:
-                # inserts stock into portfolio (needs fix currently writes over old buys build a sting array)
-                db.execute('UPDATE portfolio SET stocks=:stocks, quantity=:quantity WHERE id=:user_id', stocks=request.form.get("symbol"), quantity=request.form.get("quantity"), user_id=session["user_id"])
+                # finds how much cash the current user has avialable
+                cash_list = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id = session["user_id"])
+                # convert returned list value to a float
+                cash = float(cash_list[0].get("cash"))
+        
+                purchase_price = find_transactionprice(request.form.get("symbol"), request.form.get("quantity"))
+                if purchase_price > cash:
+                    return apology("you don't have enough money")
             
-            # delete cash from users table
-            cash -= purchase_price
-            db.execute("UPDATE users SET cash=:cash WHERE id=:user_id", cash=cash, user_id=session["user_id"])
+                else:
+                    db.execute("INSERT INTO transactions (id, stocks, quantity, price) \
+                    VALUES(:userid, :stocks, :quantity, :price)",
+                    userid=session["user_id"], stocks=request.form.get("symbol").upper(), price=purchase_price,
+                    quantity=request.form.get("quantity"))
+    
+                    # delete cash from users table
+                    cash -= purchase_price
+                    db.execute("UPDATE users SET cash=:cash WHERE id=:user_id", cash=cash, user_id=session["user_id"])
             
-            return redirect(url_for("index"))
+                    return redirect(url_for("index"))
             
     else:
         return render_template("buy.html")
@@ -114,7 +124,18 @@ def buy():
 @login_required
 def history():
     """Show history of transactions."""
-    return apology("TODO")
+    # gets the transaction SQL table and formates it for use here
+    history = db.execute("SELECT stocks, quantity, price, timestamp FROM transactions WHERE id=:userid",
+    userid=session["user_id"])
+    
+    # declares list to populate the history.html
+    count = (len(history))
+    price = []
+    
+    for i in range(count):
+        price.append(usd(history[i]["price"]))
+    
+    return render_template("history.html", history=history, count=count, price=price)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -176,9 +197,10 @@ def quote():
         quote = lookup(request.form.get("symbol"))
     
         if quote == None: 
-            return apology("couldn't find {} stock".format(request.form.get("symbol")))
+            return apology("couldn't find {} stock".format(request.form.get("symbol").upper()))
         else:
-            return render_template("quoted.html", name=quote["name"], price=quote["price"], symbol=quote["symbol"])
+            price = usd(quote["price"])
+            return render_template("quoted.html", name=quote["name"], price=price, symbol=quote["symbol"])
     else:
         return render_template("quote.html")
 
@@ -212,14 +234,15 @@ def register():
         if not result:
         
             # Enters registration's information into the data base
-            db.execute("INSERT INTO users (username, pwd_hash) VALUES(:username, :pwd_hash)", username=request.form.get("username"), pwd_hash=pwd_hash)
+            db.execute("INSERT INTO users (username, pwd_hash) VALUES(:username, :pwd_hash)",
+            username=request.form.get("username"), pwd_hash=pwd_hash)
         
             # automatically logs in the new registration assuming all checks passed
             rows = db.execute("SELECT * FROM users WHERE username = :username", username=request.form.get("username"))
             session["user_id"] = rows[0]["id"]
             
             # creates portfolio with same id as well
-            db.execute("INSERT INTO portfolio (id) VALUES(:user_id)", user_id=session["user_id"])
+            #db.execute("INSERT INTO portfolio (id) VALUES(:user_id)", user_id=session["user_id"])
 
             return redirect(url_for("index"))
         
@@ -231,4 +254,84 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock."""
-    return apology("TODO")
+    # if user reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+    
+        # finds all the users stock information
+        portfolio = db.execute("SELECT stocks, SUM(quantity) FROM transactions WHERE id=:user_id GROUP BY stocks",
+        user_id=session["user_id"])
+        
+        # checks to make sure user entered a positive number for quantity
+        quantity = request.form.get("quantity")
+        if not quantity or not quantity.isdigit() or float(quantity) < 0:
+            return apology("enter a positive number for quantity")
+            
+        switch = 2 #initialze switch variable
+    
+        # interate over all stocks in profile 
+        for i in range(len(portfolio)):
+            # looks for the user entered stock in the list
+            if portfolio[i]["stocks"] == request.form.get("symbol").upper():
+                switch = 0
+                # handles case where user tries to sell more shares than the user owns
+                if portfolio[i]["SUM(quantity)"] < int(request.form.get("quantity")):
+                    switch = 1
+        
+        # the selected stock was owned and user sold some or all of owned shares
+        if switch == 0:
+            # declare variable for formating
+            quantity = int(request.form.get("quantity"))
+            quantity = -quantity
+            
+            # calculates sale price
+            sale_price = find_transactionprice(request.form.get("symbol"), request.form.get("quantity"))
+            
+            # inserts the new transaction into the SQL table transaction
+            db.execute("INSERT INTO transactions (id, stocks, quantity, price) \
+            VALUES(:userid, :stocks, :quantity, :price)",
+            userid=session["user_id"], stocks=request.form.get("symbol").upper(), quantity=quantity, price=sale_price)
+            
+            # finds current user's cash and calculates it
+            user_info = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id=session["user_id"])
+            cash = user_info[0]['cash'] + sale_price
+            
+            # updates users new cash after sale
+            db.execute("UPDATE users SET cash=:cash WHERE id=:userid", cash=cash, userid=session["user_id"])
+            
+        # prints apology for cas where user tries to sell more shares than the user owns
+        elif switch == 1:
+            return apology("You don't own that many shares of {}".format(request.form.get("symbol").upper()))
+        
+        # checks if user entered stock was in the profile, if not returns an apology
+        else:   
+            return apology("You don't own that stock!")
+            
+        return redirect(url_for("index"))
+        
+    else:
+        return render_template("sell.html")
+
+    
+@app.route("/addcash", methods=["GET", "POST"])
+@login_required
+def addcash():
+    """Allows user to add cash to their balance"""
+    # if user reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+        
+        # gets date from SQL table
+        query = db.execute("SELECT cash FROM users WHERE id = :userid", userid = session["user_id"])
+        
+        # checks for proper input
+        if request.form.get("cash").isdigit():
+            cash = query[0]["cash"] + float(request.form.get("cash"))
+        
+            # puts cash into SQL table
+            db.execute("UPDATE users SET cash=:cash WHERE id=:user_id", cash=cash, user_id=session["user_id"])
+        
+            return redirect(url_for("index"))
+        
+        else:
+            return apology("enter a number")
+    else:
+        return render_template("addcash.html")

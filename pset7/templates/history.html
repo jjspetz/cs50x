@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    history
+{% endblock %}
+
+{% block main %}
+<div class="history-display">
+    <h1>
+        Profile History
+    </h1>
+    <div>
+    <table>
+        <tr>
+            <th>Stock Symbol</th>
+            <th>Shares</th>
+            <th>Cash Change</th>
+            <th>Date and Time</th>
+        </tr>
+        
+        {% for i in range(count) %}
+        {% if history[i]["quantity"] > 0 %}
+        <tr style="color:green">
+            <td>{{history[i]["stocks"]}}</td>
+            <td>{{history[i]["quantity"]}}</td>
+            <td style="color:red">{{price[i]}}</td>
+            <td style="color:black">{{history[i]["timestamp"]}}</td>
+        </tr>
+        {% elif history[i]["quantity"] < 0 %}
+        <tr style="color:red">
+            <td>{{history[i]["stocks"]}}</td>
+            <td>{{history[i]["quantity"]}}</td>
+            <td style="color:green">{{price[i]}}</td>
+            <td style="color:black">{{history[i]["timestamp"]}}</td>
+        </tr>
+        {% else %}
+        {% endif %}
+        {% endfor %}
+        
+    </table>
+    </div>
+</div>
+{% endblock %}
