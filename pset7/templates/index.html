@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    index
+{% endblock %}
+
+{% block main %}
+    <div class="display">
+    <table>
+        <tr>
+            <th>Stock Symbol</th>
+            <th>Shares Owned</th>
+            <th>Share Price</th>
+            <th>Total Value</th>
+        </tr>
+        {% for i in range(count) %}
+        <tr>
+            <td>{{stocks[i]}}</td>
+            <td>{{quantity[i]}}</td>
+            <td>{{sp[i]}}</td>
+            <td>{{tp[i]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+    <div class=beside-table>
+        <div class=cash>
+        </div>
+        <div class=net>
+            {{table}}
+        </div>
+    </div>    
+{% endblock %}

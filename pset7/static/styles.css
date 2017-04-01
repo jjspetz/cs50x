@@ -44,3 +44,19 @@ main td
     /* left-align tables' cells */
     text-align: left;
 }
+
+/*My additions*/
+.display {
+    margin: 0 auto;
+    text-align: center;
+}
+table {
+    width: 50%;
+    margin: 1em auto;
+}
+.display td {
+    text-align: right !important;
+}
+th {
+    text-align: right;
+}

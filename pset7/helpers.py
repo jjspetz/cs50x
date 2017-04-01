@@ -1,6 +1,7 @@
 import csv
 import urllib.request
 
+
 from flask import redirect, render_template, request, session, url_for
 from functools import wraps
 
@@ -68,3 +69,18 @@ def lookup(symbol):
 def usd(value):
     """Formats value as USD."""
     return "${:,.2f}".format(value)
+
+def find_shareprice(symbol):
+    # finds the current price of a stock
+    quote = lookup(symbol)
+    
+    if quote == None: 
+        return apology("couldn't find {} stock".format(symbol))
+    else:
+        return quote["price"]
+
+def find_purchaseprice(symbol, quantity):
+    # calculate the total purchase price
+    purchase_price = find_shareprice(symbol) * int(quantity)
+    
+    return purchase_price
