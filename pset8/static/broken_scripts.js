@@ -37,7 +37,7 @@ $(function() {
     // options for map
     // https://developers.google.com/maps/documentation/javascript/reference#MapOptions
     var options = {
-        center: {lat: 42.3770, lng: -71.1256}, // Cambridge, MA
+        center: {lat: 29.7604, lng: -95.3698}, // Houston, TX
         disableDefaultUI: true,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         maxZoom: 14,
@@ -63,37 +63,33 @@ $(function() {
  */
 function addMarker(place)
 {
-  // creates a marker
-  var myLatLon = {lat: place.latitude, lng: place.longitude};
+    // creates a marker
+    var myLatLon = {lat: place.latitude, lng: place.longitude};
+    
+    var marker = new google.maps.Marker({
+        position: myLatLon,
+        map: map,
+        title: place.latitude + ", " + place.longitude
+    });
 
-  var marker = new google.maps.Marker({
-     position: myLatLon,
-     map: map,
-     label: place.place_name + ", " + place.admin_name1
-   });
-   
-    marker.addListener("click", function(){  
-        var geo = "geo=" + place.place_name;
-        /* gets articles for place
+    /* gets articles for place
         help found at http://api.jquery.com/jquery.getjson/ */
-        $.getJSON(Flask.url_for("articles"), geo)
-        .done(function(data, textStatus, jqXHR) {
-            var display = "";
+    $.getJSON(Flask.url_for("articles"), place)
+    .done(function(data, textStatus, jqXHR) {
+        var display = "";
         
-            for (var i = 0; i < 4; i++) {
-                display += "<li><a href='" + data[i].link + "' target='_blank'>" + data[i].title + "</a></li>";
-            }
-            
-            showInfo(marker, display);
+        for (var i = 0; i > 4; i++) {
+            display += '<li><a href="' + data[i].link + '">' + data[i].title + '</a></li>'
+        }
+       showInfo(marker, display);
        
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-
-            // log error to browser's console
-            console.log(errorThrown.toString());
-        });
-        markers.push(marker);
     })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+
+        // log error to browser's console
+        console.log(errorThrown.toString());
+    });
+    markers.push(marker);
 }
 
 /**
@@ -153,8 +149,8 @@ function configure()
     // re-enable ctrl- and right-clicking (and thus Inspect Element) on Google Map
     // https://chrome.google.com/webstore/detail/allow-right-click/hompjdfbfmmmgflfjdlnkohcplmboaeo?hl=en
     document.addEventListener("contextmenu", function(event) {
-        event.returnValue = true;
-        event.stopPropagation && event.stopPropagation();
+        event.returnValue = true; 
+        event.stopPropagation && event.stopPropagation(); 
         event.cancelBubble && event.cancelBubble();
     }, true);
 
@@ -170,10 +166,7 @@ function configure()
  */
 function removeMarkers()
 {
-    for (var i = 0; i < markers.length; i++) {
-        markers[i].setMap(null);
-    }
-    markers = [];
+    marker.setMap(null);
 }
 
 /**
@@ -187,7 +180,7 @@ function search(query, syncResults, asyncResults)
     };
     $.getJSON(Flask.url_for("search"), parameters)
     .done(function(data, textStatus, jqXHR) {
-
+     
         // call typeahead's callback with search results (i.e., places)
         asyncResults(data);
     })
@@ -231,7 +224,7 @@ function showInfo(marker, content)
 /**
  * Updates UI's markers.
  */
-function update()
+function update() 
 {
     // get map's bounds
     var bounds = map.getBounds();

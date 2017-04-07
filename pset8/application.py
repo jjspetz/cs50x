@@ -32,16 +32,25 @@ def index():
 @app.route("/articles")
 def articles():
     """Look up articles for geo."""
-
-    # TODO
-    return jsonify([])
+    geo = request.args.get('geo')
+    
+    return jsonify(lookup(geo))
 
 @app.route("/search")
 def search():
     """Search for places that match query."""
-
-    # TODO
-    return jsonify([])
+    q = request.args.get('q')
+    q_plus = q + "%"
+    if q.isdigit():
+        result = db.execute("SELECT * FROM places WHERE postal_code LIKE :zipcode", zipcode=q_plus)
+    elif ',' in q:
+        q_array = q.split(',')
+        result = db.execute("SELECT * FROM places WHERE place_name LIKE :city \
+        OR admin_name1 LIKE :state", city=q_array[0], state=q_array[1])
+    else:
+        result = db.execute("SELECT * FROM places WHERE place_name LIKE :city \
+        OR admin_name1 LIKE :state", city=q_plus, state=q_plus)
+    return jsonify(result)
 
 @app.route("/update")
 def update():
