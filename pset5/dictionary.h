@@ -31,4 +31,10 @@ unsigned int size(void);
  */
 bool unload(void);
 
+/**
+ * hash function from batanete @ https://github.com/batanete/CHashTables/blob/master/hashtables.c
+ */
+unsigned long hash(char* key);
+
+
 #endif // DICTIONARY_H

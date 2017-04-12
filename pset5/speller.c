@@ -8,6 +8,7 @@
 #include <sys/time.h>
 
 #include "dictionary.h"
+
 #undef calculate
 #undef getrusage
 
