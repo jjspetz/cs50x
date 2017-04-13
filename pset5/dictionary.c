@@ -4,6 +4,8 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "dictionary.h"
 
@@ -21,12 +23,37 @@ node;
 // hash table
 node* hashtable[MAX];
 
+// dictionary word counter
+int words;
+
 /**
  * Returns true if word is in dictionary else false.
  */
-bool check(const char *word)
+bool check(char *word)
 {
-    // TODO
+    /***********
+     *
+     * 1. hash word
+     * 2. loop through linked list checking for word
+     * 3. if found return true else return false
+     *
+     ************/
+    // hash word
+    int index = hash(word);
+
+    // declare a node pointer variable to "look through the list"
+    node* look;
+    look = hashtable[index];
+
+    // loops through the linked list looking for a match
+    while (look->next != NULL)
+    {
+        if (look->word == word)
+            return true;
+        else
+            look = look->next;
+    }
+
     return false;
 }
 
@@ -35,10 +62,6 @@ bool check(const char *word)
  */
 bool load(const char *dictionary)
 {
-    // declare linked list variables
-    node* n;
-    node* t;
-    
     // opens dictionary
     FILE* dict = fopen(dictionary, "r");
 
@@ -47,38 +70,49 @@ bool load(const char *dictionary)
         printf("Could not open dicionary.\n");
         return false;
     }
-    
+
     // creates buffer of maximum length for fgets
-    char word[LENGTH + 1];
-    
+    char buffer[LENGTH + 1];
+
     // loops through the file one word at a time
-    while (fscanf(dict, "%s", word) != EOF){
-        
+    while (fscanf(dict, "%s", buffer) != EOF){
+
         // create new node
-        node* n = malloc(sizeof(node));
+        node *n = malloc(sizeof(*n));
         if (n ==NULL)
         {
             printf("out of memory");
             return false;
         }
-        
+
         // copies buffer into the new node
         strcpy(n->word, buffer);
-        
-        // checks to make sure there is a place to link n-node to
-        if (hashtable[hash(word)] != NULL)
-            n->next = hashtable[hash(word)];
-            
-        // set t to n
-        t = n;
-        
-        // point hash table to head of linked list
-        if (hashtable[hash(word)] == NULL)
-            hashtable[hash(word)] = n;
-    }
 
-    
-    return false;
+        // checks to see if hashtable placement is empty
+        if (hashtable[hash(buffer)]==NULL)
+            hashtable[hash(buffer)] = n;
+
+        // handles hashtable conflicts
+        else
+        {
+            // declare a temp pointer and points to the head of the linked list
+            node* tmp;
+            tmp = hashtable[hash(buffer)];
+
+            // set the node pointer to the front of the linked list
+            n->next = tmp;
+
+            // points table pointer to the newest front of the list
+            hashtable[hash(buffer)] = n;
+        }
+
+        // increases word count by one
+        words++;
+    }
+    // close dictionary
+    fclose(dict);
+
+    return true;
 }
 
 /**
@@ -86,23 +120,7 @@ bool load(const char *dictionary)
  */
 unsigned int size(void)
 {
-    //opens text and checks if null
-    char *text = (argc == 3) ? argv[2] : argv[1];
-    FILE *fp = fopen(text, "r");
-    if (fp == NULL)
-    {
-        printf("Could not open %s.\n", text);
-        unload();
-        return 0;
-    }
-    // if the text passed error check finds the size of text
-    int back = ftell(fp);
-    fseek(fp, 0, SEEK_END);
-    unsigned int sz = ftell(fp);
-    fseek(fp, back, SEEK_SET);
-    return sz;
-    
-    fclose(fp);
+    return words;
 }
 
 /**
@@ -116,24 +134,24 @@ bool unload(void)
 
 	/**************************
 	* Hash Function
-	* 
+	*
 	* I will use the sdbm hash function.
 	* code from https://github.com/batanete/CHashTables/blob/master/hashtables.c
 	* It is modified for use in my program.
-	* 
+	*
 	**************************/
-	unsigned long hash(char* key){
+	unsigned int hash(char* key){
 	//unsigned long res = 5381; //djb2
-	unsigned long res = 0; // sdbm
+	unsigned int res = 0; // sdbm
     int c;
 
     while ((c = *key++))
 		//res = ((res << 5) + res) + c; /* hash * 33 + c (djb2)*/
 		res = c + (res << 6) + (res << 16) - res; //sdbm
-		
+
 	// makes sure hash value will fit into my hash table
 	res = res % MAX;
-	
-	
+
+
 	return res;
 }
